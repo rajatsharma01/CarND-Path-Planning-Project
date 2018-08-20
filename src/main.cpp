@@ -9,6 +9,8 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 
+#include "car.h"
+
 using namespace std;
 
 // for convenience
@@ -242,8 +244,37 @@ int main() {
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
 
+            // Predict state of other cars received in sensor_fusion data
+            map<int, Car> predictions;
+            for (size_t i = 0; i < sensor_fusion.size(); i++) {
+                int id = sensor_fusion[i][0];
+                double x = sensor_fusion[i][1];
+                double y = sensor_fusion[i][2];
+                double vx = sensor_fusion[i][3];
+                double vy = sensor_fusion[i][4];
+                double s = sensor_fusion[i][5];
+                double d = sensor_fusion[i][6];
+
+                int wp = ClosestWaypoint(x, y, map_waypoints_x, map_waypoints_y);
+                double dx = map_waypoints_dx[wp];
+                double dy = map_waypoints_dy[wp];
+                double vd = vx*dx + vy*dy;
+                double vs = -vx*dy + vy*dx;
+
+                predictions[id] = Car(s, d, vs, vd);
+            }
 
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
+            double dist_inc = 0.5;
+            for (int i = 0; i < 50; i++) {
+                double next_s = car_s + (i+1)*dist_inc;
+                double next_d = 6;
+
+                vector<double> xy = getXY(next_s, next_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+                next_x_vals.push_back(xy[0]);
+                next_y_vals.push_back(xy[1]);
+            }
+
           	msgJson["next_x"] = next_x_vals;
           	msgJson["next_y"] = next_y_vals;
 
