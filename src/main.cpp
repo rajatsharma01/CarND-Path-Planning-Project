@@ -9,7 +9,8 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 
-#include "car.h"
+#include "spline.h"
+#include "planner.h"
 
 using namespace std;
 
@@ -202,6 +203,8 @@ int main() {
   	map_waypoints_dy.push_back(d_y);
   }
 
+  Planner planner(max_s, 1.0);  // Path planner for 1s time horizon
+
   h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -264,15 +267,20 @@ int main() {
                 predictions[id] = Car(s, d, vs, vd);
             }
 
-          	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
-            double dist_inc = 0.5;
-            for (int i = 0; i < 50; i++) {
-                double next_s = car_s + (i+1)*dist_inc;
-                double next_d = 6;
+            Car ego = Car(car_s, car_speed, car_d, 0); // TODO find s and d components of speed
+            vector<FrenetPt> fpts = planner.plan(ego, predictions);
 
-                vector<double> xy = getXY(next_s, next_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+            for (size_t i = 0; i < fpts.size(); i++) {
+                vector<double> xy = getXY(fpts[i].s, fpts[i].d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
                 next_x_vals.push_back(xy[0]);
                 next_y_vals.push_back(xy[1]);
+            }
+
+            // Smoothen out pth with spline
+            tk::spline smooth;
+            smooth.set_points(next_x_vals, next_y_vals);
+            for (size_t i = 0; i < next_x_vals.size(); i++) {
+                next_y_vals[i] = smooth(next_x_vals[i]);
             }
 
           	msgJson["next_x"] = next_x_vals;

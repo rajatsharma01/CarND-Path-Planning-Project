@@ -119,39 +119,52 @@ Planner::generate_trajectory(State next_state, NextMove& out_move) {
     bool status = false;
     switch (next_state) {
         case STATE_CS:
-            status = constant_speed_trajectory(next_state, goal);
+            status = constant_speed_goal(next_state, goal);
             break;
         case STATE_KL:
-            status = keep_lane_trajectory(next_state, goal);
+            status = keep_lane_goal(next_state, goal);
             break;
         case STATE_PLCL:
         case STATE_PLCR:
-            status = prepare_lane_change_trajectory(next_state, goal);
+            status = prepare_lane_change_goal(next_state, goal);
             break;
         case STATE_LCL:
         case STATE_LCR:
-            status = lane_change_trajectory(next_state, goal);
+            status = lane_change_goal(next_state, goal);
             break;
     }
 
-    // If transition is possible, generate a minimum cost jerk minimum trajectory
-    // for this possible transition
-    if (status) {
-        double min_cost = std::numeric_limits<double>::max();
-        vector<Trajectory> trajectories =
-            Trajectory(_car_start, goal, _T).get_perturb_trajectories();
-        for (vector<Trajectory>::iterator it = trajectories; it != trajectories.end(); ++it) {
-            double cost = CostFunction(*it, _predictions)();
-            if (cost < min_cost) {
-                min_cost = cost;
-                out_move.trajectory = *it;
-                out_move.cost = cost;
-                out_move.state = next_state;
-            }
+    // If no transition is possible, return error
+    if (!status) return status;
+
+    // Generate a minimum cost jerk minimum trajectory for this possible transition
+    double min_cost = std::numeric_limits<double>::max();
+    vector<Trajectory> trajectories =
+        Trajectory(_car_start, goal, _T).get_perturb_trajectories();
+    for (vector<Trajectory>::iterator it = trajectories; it != trajectories.end(); ++it) {
+        double cost = CostFunction(*it, _predictions)();
+        if (cost < min_cost) {
+            min_cost = cost;
+            out_move.trajectory = *it;
+            out_move.cost = cost;
+            out_move.state = next_state;
         }
     }
 
     return status;
+}
+
+void
+Planner::print_trajectory(NextMove& move, vector<FrenetPts>& fpts) {
+    std::cout << "State: " << StateName[move.state] << ", Cost: " << move.cost << std::endl;
+    std::cout << "Trajectory: [ ";
+    for (int i = 0; i < fpts.size(); i++) {
+        if (i > 0) {
+            std::cout << ", ";
+        }
+        std::cout << "(" << fpts[i].s << "," << fpts[i].d << ")";
+    }
+    std::cout << " ]" << std::endl;
 }
 
 vector<FrenetPts>
@@ -159,12 +172,21 @@ Planner::plan(Car& car_start, double T, Predictions& predictions) {
     _car_start = car_start;
     _T = T;
     _predictions = predictions;
-    NextMove move = find_best_move();
+
+    double min_cost = std::numeric_limits<double>::max();
+    NextMove move;
+    bool status = false;
     for (auto next_state : successor_states()) {
-        boolove move = generate_trajectory(next_state, move);
-
-
-
+        NextMove state_move;
+        status = generate_trajectory(next_state, temp_move);
+        if (status && state_move.cost < min_cost) {
+            min_cost = state_move.cost;
+            move = state_move;
+        }
     }
-    
+    assert(status);
+    vector<FrenetPts> fpts = move.trajectory.get_frenet_points();
+    print_trajectory(move, fpts);
+     
+    return fpts;
 }

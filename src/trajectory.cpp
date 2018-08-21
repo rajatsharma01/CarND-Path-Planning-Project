@@ -37,3 +37,12 @@ Trajectory::get_perturb_trajectories() {
 
     return perturb_trajs;
 }
+
+vector<FrenetPt>
+Trajectory::get_frenet_points() {
+    vector<FrenetPt> fpts;
+    for (double t = 0; t < _T; t += TIME_STEP) {
+        fpts.push_back(FrenetPt(_jmt_s.get_value(t), _jmt_d.get_value(t)));
+    }
+    return fpts;
+}

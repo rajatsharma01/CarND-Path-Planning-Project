@@ -30,15 +30,9 @@ private: // types
         State state;            // State transition of the move
     }
 
-    // A point in Frenet coordinates
-    struct FrenetPt {
-        double s;   // s distance
-        double d;   // d distance
-    }
-
 private: // Constants
     static const double LANE_WIDTH = 4.0;
-    static const double TIME_STEP = 0.02;
+    static const vector<string> StateName = { "CS", "KL", "PLCL", "PLCR", "LCL", "LCR" };
 
 private: // Data
     State _state; // current state
@@ -49,8 +43,8 @@ private: // Data
     Predictions& _predictions; // predictions for other cars on road
 
 public: // C-tor
-    Planner(double max_s)
-        : _state(STATE_CS), _lane(LANE_MIDDLE), _max_s(max_s)
+    Planner(double max_s, double T)
+        : _state(STATE_CS), _lane(LANE_MIDDLE), _max_s(max_s), _T(T)
     { }
 
 private: // helpers
@@ -74,11 +68,18 @@ private: // helpers
     // Get kinematics of desired lane based on car in front
     Car get_lane_kinematics(Lane lane);
 
-    // Trajectory generation
+    // Below functions return a goal configuration for ego car in desired lane
+    // with state transition to next_state. Returns true if a goal state is found
+    bool constant_speed_goal(State next_state, Car& goal);
+    bool keep_lane_goal(State next_state, Car& goal);
+    bool prepare_lane_change_goal(State next_state, Car& goal);
+    bool lane_change_goal(State next_state, Car& goal);
+
+    // Generate a low cost jerk minimizing trajectory for next_state
     NextMove generate_trajectory(State next_state);
-    NextMove constant_speed_trajectory(State next_state);
-    NextMove keep_lane_trajectory(State next_state);
-    NextMove prepare_lane_change_trajectory(State next_state);
+
+    // Print debug info about trajectory selected by planner
+    void print_trajectory(NextMove& move, vector<FrenetPts>& fpts);
 
 public: // API
 
@@ -86,11 +87,10 @@ public: // API
     // 
     // Params:
     //  car_start   - starting state of ego car
-    //  T           - Time horizon for the move
     //  predictions - state predictions for other cars on the road
     //
     // returns path vector in frenet coordinates
-    vector<Frenet> plan(Car& car_start, double T, Predictions& predictions);
+    vector<FrenetPt> plan(Car& car_start, Predictions& predictions);
 };
 
 #endif  // _PLANNER_H
