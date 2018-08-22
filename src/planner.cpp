@@ -20,6 +20,25 @@ Planner::successor_states() {
 }
 
 Lane
+Planner::get_adjacent_lane(State next_state) {
+    Lane lane;
+    switch (next_state) {
+        case STATE_KL:
+            lane = _lane;
+            break;
+        case STATE_PLCL:
+        case STATE_LCL:
+            lane = (_lane == LANE_RIGHT) ? LANE_MIDDLE : LANE_LEFT;
+            break;
+        case STATE_PLCR:
+        case STATE_LCR:
+            lane = (_lane == LANE_LEFT) ? LANE_MIDDLE : LANE_RIGHT;
+            break;
+    }
+    return lane;
+}
+
+Lane
 Planner::d_to_lane(double d) {
     assert(d > 0 && d < 3 * LANE_WIDTH);
     if (d < LANE_WIDTH) {
@@ -97,20 +116,40 @@ Planner::get_lane_kinematics(Lane lane) {
 }
 
 bool
-Planner::constant_speed_goal(State next_state, Car& goal) {
-    return Car(
-}
-
-bool
 Planner::keep_lane_goal(State next_state, Car& goal) {
+    goal = get_lane_kinematics(_lane);
+    return true;
 }
 
 bool
 Planner::prepare_lane_change_goal(State next_state, Car& goal) {
+    goal = get_lane_kinematics(_lane);
+
+    // We can not slow down if there is car behind us
+    Car car_behind;
+    if (get_car_behind(_lane, car_behind) == false) {
+        Lane next_lane = get_adjacent_lane(next_state);
+        Car next_goal = get_lane_kinematics(next_lane);
+        if (next_goal.get_s_dot() < goal.get_s_dot()) {
+            goal = next_goal; 
+        }
+    }
+
+    return true;
 }
 
 bool
 Planner::lane_change_goal(State next_state, Car& goal) {
+    Lane next_lane = get_adjacent_lane(next_state);
+    for (Predictions::iterator it = _predictions.begin(); it != _predictions.end(); ++it) {
+        Car other_car = it->second;
+        if (d_to_lane(other_car.get_d()) == _lane && other_car.overlaps(_car_start)) {
+            // Can not perform a lane change if there is a car in adjacent lane
+            return false;
+        }
+    }
+    goal = get_lane_kinematics(next_lane);
+    return true;
 }
 
 bool
@@ -118,9 +157,6 @@ Planner::generate_trajectory(State next_state, NextMove& out_move) {
     Car goal;
     bool status = false;
     switch (next_state) {
-        case STATE_CS:
-            status = constant_speed_goal(next_state, goal);
-            break;
         case STATE_KL:
             status = keep_lane_goal(next_state, goal);
             break;
@@ -172,6 +208,7 @@ Planner::plan(Car& car_start, double T, Predictions& predictions) {
     _car_start = car_start;
     _T = T;
     _predictions = predictions;
+    _lane = d_to_lane(_car_start.get_d());
 
     double min_cost = std::numeric_limits<double>::max();
     NextMove move;
@@ -187,6 +224,8 @@ Planner::plan(Car& car_start, double T, Predictions& predictions) {
     assert(status);
     vector<FrenetPts> fpts = move.trajectory.get_frenet_points();
     print_trajectory(move, fpts);
+
+    _state = move.state;
      
     return fpts;
 }

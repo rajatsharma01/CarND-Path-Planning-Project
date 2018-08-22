@@ -14,6 +14,7 @@ private: // Constants
     static const double MAX_ACCELERATION = 10; // maximum acceleration of this car in m/s^2
     static const double MAX_JERK = 10; // maximum jerk in m/s^3
     static const double PREFERRED_GAP = 15; // preffered gap in m to maintain from front car 
+    static const double OVERLAP_DISTANCE = 15; // two cars below overlap distance can collide
 
 private: // Data members
     double _s;          // car's s position in frenet coordinates
@@ -42,6 +43,11 @@ public: // methods
                    _d + _d_dot * t + _d_dot_dot * t2 * 0.5,
                    _d_dot + _d_dot_dot * t,
                    _d_dot_dot);
+    }
+
+    // Return true if this car's s distance overlaps with other_car
+    bool overlaps(Car& other_car) const {
+        return fabs(this->s - other_car) < OVERLAP_DISTANCE;
     }
 
     // Accessors

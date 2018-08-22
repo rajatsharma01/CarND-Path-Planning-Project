@@ -22,6 +22,9 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
+// convert miles per hour to meter per second
+double mph2mps(double x) { return x * 0.447; }
+
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -166,6 +169,19 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 }
 
+// Return velocity along s and d in frenet coordinates
+vector<double> getFrenetVelocity(double x, double y,
+                                 const vector<double> &maps_x, const vector<double> &maps_y,
+                                 const vector<double> &maps_dx, const vector<double> &maps_dy)
+{
+    int wp = ClosestWaypoint(x, y, maps_x, maps_y);
+    double dx = maps_dx[wp];
+    double dy = maps_dy[wp];
+    double vd = vx*dx + vy*dy;
+    double vs = -vx*dy + vy*dx;
+    return {vs, vd};
+}
+
 int main() {
   uWS::Hub h;
 
@@ -258,16 +274,14 @@ int main() {
                 double s = sensor_fusion[i][5];
                 double d = sensor_fusion[i][6];
 
-                int wp = ClosestWaypoint(x, y, map_waypoints_x, map_waypoints_y);
-                double dx = map_waypoints_dx[wp];
-                double dy = map_waypoints_dy[wp];
-                double vd = vx*dx + vy*dy;
-                double vs = -vx*dy + vy*dx;
-
-                predictions[id] = Car(s, d, vs, vd);
+                vector<double> VsVd = getFrenetVelocity(x, y, map_waypoints_x, map_waypoints_y,
+                                                        map_waypoints_dx, map_waypoints_dy);
+                predictions[id] = Car(s, d, VsVd[0], VsVd[1]);
             }
 
-            Car ego = Car(car_s, car_speed, car_d, 0); // TODO find s and d components of speed
+            vector<double> VsVd = getFrenetVelocity(car_x, car_y, map_waypoints_x, map_waypoints_y,
+                                                    map_waypoints_dx, map_waypoints_dy);
+            Car ego = Car(car_s, VsVd[0], car_d, VsVd[1]);
             vector<FrenetPt> fpts = planner.plan(ego, predictions);
 
             for (size_t i = 0; i < fpts.size(); i++) {

@@ -9,7 +9,6 @@
 class Planner {
 private: // types
     enum State {
-        STATE_CS,   // Constant Speed - initial default state
         STATE_KL,   // Keep Lane
         STATE_PLCL, // Prepare to Lane change left
         STATE_PLCR, // Prepare to change lane right
@@ -32,7 +31,7 @@ private: // types
 
 private: // Constants
     static const double LANE_WIDTH = 4.0;
-    static const vector<string> StateName = { "CS", "KL", "PLCL", "PLCR", "LCL", "LCR" };
+    static const vector<string> StateName = { "KL", "PLCL", "PLCR", "LCL", "LCR" };
 
 private: // Data
     State _state; // current state
@@ -44,12 +43,15 @@ private: // Data
 
 public: // C-tor
     Planner(double max_s, double T)
-        : _state(STATE_CS), _lane(LANE_MIDDLE), _max_s(max_s), _T(T)
+        : _state(STATE_KL), _lane(LANE_MIDDLE), _max_s(max_s), _T(T)
     { }
 
 private: // helpers
     // Return list of possible next states
     vector<State> successor_states() const;
+
+    // Return adjacent lane based on next_state
+    Lane get_adjacent_lane() const;
 
     // Returns lane from d value
     Lane d_to_lane(double d);
@@ -70,7 +72,6 @@ private: // helpers
 
     // Below functions return a goal configuration for ego car in desired lane
     // with state transition to next_state. Returns true if a goal state is found
-    bool constant_speed_goal(State next_state, Car& goal);
     bool keep_lane_goal(State next_state, Car& goal);
     bool prepare_lane_change_goal(State next_state, Car& goal);
     bool lane_change_goal(State next_state, Car& goal);
