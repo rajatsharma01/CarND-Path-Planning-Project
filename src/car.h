@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <cmath>
 #include "constants.h"
 
 // Car class can represent a logical position of a car on same side of the road
@@ -57,17 +58,17 @@ public: // methods
     double get_d_dot_dot() const { return _d_dot_dot; }
 
     std::vector<double> get_s_vector() const {
-        vector<double> svec = {_s, _s_dot, _s_dot_dot};
+        std::vector<double> svec = {_s, _s_dot, _s_dot_dot};
         return svec;
     }
 
     std::vector<double> get_d_vector() const {
-        vector<double> dvec = {_d, _d_dot, _d_dot_dot};
+        std::vector<double> dvec = {_d, _d_dot, _d_dot_dot};
         return dvec;
     }
 };
 
 // Predictions of all cars state on the road
-typedef map<int, Car> Predictions;
+typedef std::map<int, Car> Predictions;
 
 #endif // _CAR_H

@@ -6,13 +6,13 @@ Trajectory::Trajectory(Car car_start, Car car_end, double T)
     _jmt_d(car_start.get_d_vector(), car_end.get_d_vector(), T)
 { }
 
-vector<Trajectory>
+std::vector<Trajectory>
 Trajectory::get_perturb_trajectories() {
-    vector<Trajectory> perturb_trajs;
+    std::vector<Trajectory> perturb_trajs;
     perturb_trajs.push_back(*this);
 
-    vector<double> svec = car_end.get_s_vector();
-    vector<double> dvec = car_end.get_d_vector();
+    std::vector<double> svec = car_end.get_s_vector();
+    std::vector<double> dvec = car_end.get_d_vector();
 
     std::default_random_engine generator;
     std::normal_distribution<double> T_distrib(_T, SIGMA_T);
@@ -38,9 +38,9 @@ Trajectory::get_perturb_trajectories() {
     return perturb_trajs;
 }
 
-vector<FrenetPt>
+std::vector<FrenetPt>
 Trajectory::get_frenet_points() {
-    vector<FrenetPt> fpts;
+    std::vector<FrenetPt> fpts;
     for (double t = 0; t < _T; t += TIME_STEP) {
         fpts.push_back(FrenetPt(_jmt_s.get_value(t), _jmt_d.get_value(t)));
     }

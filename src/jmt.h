@@ -41,7 +41,7 @@ public: // methods
 
     // Returns vector containing above 4 values at t
     // { s(t), s'(t), s''(t), s'''(t) }
-    vector<double> get_vector(double t) const;
+    std::vector<double> get_vector(double t) const;
 
 private: // Data members
     VectorXd _coeffs;

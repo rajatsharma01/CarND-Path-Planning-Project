@@ -2,9 +2,9 @@
 #include "constants.h"
 #include "planner.h"
 
-vector<State>
-Planner::successor_states() {
-	vector<State> next_states;
+std::vector<Planner::State>
+Planner::successor_states() const {
+    std::vector<Planner::State> next_states;
 	// Its always possible to keep lane
 	next_states.push_back(STATE_KL);
 	if (_state == STATE_KL) {
@@ -20,9 +20,9 @@ Planner::successor_states() {
 	return next_states;
 }
 
-Lane
-Planner::get_adjacent_lane(State next_state) {
-    Lane lane;
+Planner::Lane
+Planner::get_adjacent_lane(Planner::State next_state) const {
+    Planner::Lane lane;
     switch (next_state) {
         case STATE_KL:
             lane = _lane;
@@ -39,8 +39,8 @@ Planner::get_adjacent_lane(State next_state) {
     return lane;
 }
 
-Lane
-Planner::d_to_lane(double d) {
+Planner::Lane
+Planner::d_to_lane(double d) const {
     assert(d > 0 && d < 3 * LANE_WIDTH);
     if (d < LANE_WIDTH) {
         return LANE_LEFT;
@@ -52,7 +52,7 @@ Planner::d_to_lane(double d) {
 }
 
 double
-Planner::lane_to_d(Lane lane) {
+Planner::lane_to_d(Lane lane) const {
     double d;
     switch (lane) {
         case LANE_LEFT:     d = 0.5 * LANE_WIDTH; break;
@@ -63,14 +63,13 @@ Planner::lane_to_d(Lane lane) {
 }
 
 bool
-Planner::get_car_ahead(Lane lane, Car& out_car) {
+Planner::get_car_ahead(Lane lane, Car& out_car) const {
     double min_s = _max_s;
     bool found = false;
-    Car& car_ahead;
-    for (Predictions::iterator it = _predictions.begin(); it != _predictions.end(); ++it) {
-        car_ahead = it->second;
+    for (Predictions::iterator it = _predictions->begin(); it != _predictions->end(); ++it) {
+        Car& car_ahead = it->second;
         if (d_to_lane(car_ahead.get_d()) == lane &&
-            car_ahead.get_s() > _car_start.get_s() &&
+            car_ahead.get_s() > _car_start->get_s() &&
             car_ahead.get_s() < min_s) {
             min_s = car_ahead.get_s();
             out_car = car_ahead;
@@ -81,14 +80,13 @@ Planner::get_car_ahead(Lane lane, Car& out_car) {
 }
 
 bool
-Planner::get_car_behind(Lane lane, Car& out_car) {
+Planner::get_car_behind(Lane lane, Car& out_car) const {
     double max_s = -1;
     bool found = false;
-    Car& car_behind;
-    for (Predictions::iterator it = _predictions.begin(); it != _predictions.end(); ++it) {
-        car_behind = it->second;
+    for (Predictions::iterator it = _predictions->begin(); it != _predictions->end(); ++it) {
+        Car& car_behind = it->second;
         if (d_to_lane(car_behind.get_d()) == lane &&
-            car_behind.get_s() < _car_start.get_s() &&
+            car_behind.get_s() < _car_start->get_s() &&
             car_behind.get_s() > max_s) {
             max_s = car_behind.get_s();
             out_car = car_behind;
@@ -99,9 +97,9 @@ Planner::get_car_behind(Lane lane, Car& out_car) {
 }
 
 Car
-Planner::get_lane_kinematics(Lane lane) {
+Planner::get_lane_kinematics(Lane lane) const {
     double s;
-    double v = std::min(Car::MAX_SPEED, _car_start.get_s_dot() + Car::MAX_ACCELERATION * _T);
+    double v = std::min(MAX_SPEED, _car_start->get_s_dot() + Car::MAX_ACCELERATION * _T);
     double a;
     double T2 = _T*_T;
     Car car_ahead;
@@ -110,20 +108,20 @@ Planner::get_lane_kinematics(Lane lane) {
     if (get_car_ahead(lane, car_ahead)) {
         v = std::min(car_ahead.get_s_dot(), v);
     }
-    a = (v - _car_start.get_s_dot())/_T;        // a = (v-u)/t
-    s = _car_start.get_s() + v*_T + 0.5*a*T2;   // s = ut + 1/2at^2 
+    a = (v - _car_start->get_s_dot())/_T;        // a = (v-u)/t
+    s = _car_start->get_s() + v*_T + 0.5*a*T2;   // s = ut + 1/2at^2 
 
     return Car(s, v, a, lane_to_d(lane), 0, 0);
 }
 
 bool
-Planner::keep_lane_goal(State next_state, Car& goal) {
+Planner::keep_lane_goal(Planner::State next_state, Car& goal) const {
     goal = get_lane_kinematics(_lane);
     return true;
 }
 
 bool
-Planner::prepare_lane_change_goal(State next_state, Car& goal) {
+Planner::prepare_lane_change_goal(Planner::State next_state, Car& goal) const {
     goal = get_lane_kinematics(_lane);
 
     // We can not slow down if there is car behind us
@@ -140,11 +138,11 @@ Planner::prepare_lane_change_goal(State next_state, Car& goal) {
 }
 
 bool
-Planner::lane_change_goal(State next_state, Car& goal) {
+Planner::lane_change_goal(Planner::State next_state, Car& goal) const {
     Lane next_lane = get_adjacent_lane(next_state);
-    for (Predictions::iterator it = _predictions.begin(); it != _predictions.end(); ++it) {
+    for (Predictions::iterator it = _predictions->begin(); it != _predictions->end(); ++it) {
         Car other_car = it->second;
-        if (d_to_lane(other_car.get_d()) == _lane && other_car.overlaps(_car_start)) {
+        if (d_to_lane(other_car.get_d()) == _lane && other_car.overlaps(*_car_start)) {
             // Can not perform a lane change if there is a car in adjacent lane
             return false;
         }
@@ -154,7 +152,7 @@ Planner::lane_change_goal(State next_state, Car& goal) {
 }
 
 bool
-Planner::generate_trajectory(State next_state, NextMove& out_move) {
+Planner::generate_trajectory(Planner::State next_state, NextMove& out_move) const {
     Car goal;
     bool status = false;
     switch (next_state) {
@@ -176,10 +174,10 @@ Planner::generate_trajectory(State next_state, NextMove& out_move) {
 
     // Generate a minimum cost jerk minimum trajectory for this possible transition
     double min_cost = std::numeric_limits<double>::max();
-    vector<Trajectory> trajectories =
-        Trajectory(_car_start, goal, _T).get_perturb_trajectories();
-    for (vector<Trajectory>::iterator it = trajectories; it != trajectories.end(); ++it) {
-        double cost = CostFunction(goal, _T, *it, _predictions)();
+    std::vector<Trajectory> trajectories =
+        Trajectory(*_car_start, goal, _T).get_perturb_trajectories();
+    for (std::vector<Trajectory>::iterator it = trajectories; it != trajectories.end(); ++it) {
+        double cost = CostFunction(goal, _T, *it, *_predictions)();
         if (cost < min_cost) {
             min_cost = cost;
             out_move.trajectory = *it;
@@ -192,7 +190,7 @@ Planner::generate_trajectory(State next_state, NextMove& out_move) {
 }
 
 void
-Planner::print_trajectory(NextMove& move, vector<FrenetPts>& fpts) {
+Planner::print_trajectory(NextMove& move, std::vector<FrenetPt>& fpts) const {
     std::cout << "State: " << StateName[move.state] << ", Cost: " << move.cost << std::endl;
     std::cout << "Trajectory: [ ";
     for (int i = 0; i < fpts.size(); i++) {
@@ -204,12 +202,12 @@ Planner::print_trajectory(NextMove& move, vector<FrenetPts>& fpts) {
     std::cout << " ]" << std::endl;
 }
 
-vector<FrenetPts>
-Planner::plan(Car& car_start, double T, Predictions& predictions) {
+std::vector<FrenetPt>
+Planner::plan(Car* car_start, double T, Predictions* predictions) {
     _car_start = car_start;
     _T = T;
     _predictions = predictions;
-    _lane = d_to_lane(_car_start.get_d());
+    _lane = d_to_lane(_car_start->get_d());
 
     double min_cost = std::numeric_limits<double>::max();
     NextMove move;
@@ -223,7 +221,7 @@ Planner::plan(Car& car_start, double T, Predictions& predictions) {
         }
     }
     assert(status);
-    vector<FrenetPts> fpts = move.trajectory.get_frenet_points();
+    std::vector<FrenetPt> fpts = move.trajectory.get_frenet_points();
     print_trajectory(move, fpts);
 
     _state = move.state;

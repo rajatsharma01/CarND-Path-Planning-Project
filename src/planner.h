@@ -27,59 +27,59 @@ private: // types
         Trajectory trajectory;  // Trajectory associated with this move
         double cost;            // Cost of the trajectory
         State state;            // State transition of the move
-    }
+    };
 
 private: // Constants
-    static const vector<string> StateName = { "KL", "PLCL", "PLCR", "LCL", "LCR" };
+    static constexpr const char * StateName[] = { "KL", "PLCL", "PLCR", "LCL", "LCR" };
 
 private: // Data
     State _state; // current state
     Lane _lane; // current driving lane
     double _max_s; // Max s value for whole track
     double _T; // Time horizon for planning
-    Car& car_start; // Starting state of the ego car
-    Predictions& _predictions; // predictions for other cars on road
+    const Car* _car_start; // Starting state of the ego car
+    const Predictions* _predictions; // predictions for other cars on road
 
 public: // C-tor
     Planner(double max_s, double T)
-        : _state(STATE_KL), _lane(LANE_MIDDLE), _max_s(max_s), _T(T)
+        : _state(STATE_KL), _lane(LANE_MIDDLE), _max_s(max_s), _T(T), _car_start(0), _predictions(0)
     { }
 
 private: // helpers
     // Return list of possible next states
-    vector<State> successor_states() const;
+    std::vector<State> successor_states() const;
 
     // Return adjacent lane based on next_state
-    Lane get_adjacent_lane() const;
+    Lane get_adjacent_lane(Planner::State next_state) const;
 
     // Returns lane from d value
-    Lane d_to_lane(double d);
+    Lane d_to_lane(double d) const;
 
     // Returns d value of mid point from lane
-    double lane_to_d(Lane lane);
+    double lane_to_d(Lane lane) const;
 
     // Find next car ahead of us in desired lane
     // Returns true if a car is found and car is updated
-    bool get_car_ahead(Lane lane, Car& car);
+    bool get_car_ahead(Lane lane, Car& car) const;
 
     // find next car behind us in desired lane
     // Returns true if a car is found and car is updated
-    bool get_car_behind(Lane lane, Car& car);
+    bool get_car_behind(Lane lane, Car& car) const;
 
     // Get kinematics of desired lane based on car in front
-    Car get_lane_kinematics(Lane lane);
+    Car get_lane_kinematics(Lane lane) const;
 
     // Below functions return a goal configuration for ego car in desired lane
     // with state transition to next_state. Returns true if a goal state is found
-    bool keep_lane_goal(State next_state, Car& goal);
-    bool prepare_lane_change_goal(State next_state, Car& goal);
-    bool lane_change_goal(State next_state, Car& goal);
+    bool keep_lane_goal(State next_state, Car& goal) const;
+    bool prepare_lane_change_goal(State next_state, Car& goal) const;
+    bool lane_change_goal(State next_state, Car& goal) const;
 
     // Generate a low cost jerk minimizing trajectory for next_state
-    NextMove generate_trajectory(State next_state);
+    NextMove generate_trajectory(State next_state) const;
 
     // Print debug info about trajectory selected by planner
-    void print_trajectory(NextMove& move, vector<FrenetPts>& fpts);
+    void print_trajectory(NextMove& move, std::vector<FrenetPt>& fpts) const;
 
 public: // API
 
@@ -90,7 +90,7 @@ public: // API
     //  predictions - state predictions for other cars on the road
     //
     // returns path vector in frenet coordinates
-    vector<FrenetPt> plan(Car& car_start, Predictions& predictions);
+    std::vector<FrenetPt> plan(Car* car_start, Predictions* predictions);
 };
 
 #endif  // _PLANNER_H

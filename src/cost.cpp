@@ -1,17 +1,18 @@
-#include <math.h>
+#include <cmath>
 
 #include "cost.h"
 #include "constants.h"
 
 double
-CostFunction::logistic(double x) {
+CostFunction::logistic(double x) const {
     return 2.0 / (1 + exp(-x)) - 1.0;
 }
 
 double
-CostFunction::collision_cost() {
-    for (Predictions::iterator it = _predictions.begin(); it != _predictions.end(); _it) {
-        Car other = it->at(_trajectory._T);
+CostFunction::collision_cost() const {
+    for (Predictions::iterator it = _predictions.begin(); it != _predictions.end(); ++it) {
+        Car& temp = it->second;
+        Car other = temp.at(_trajectory._T);
         double s = _trajectory._jmt_s.get_value(_trajectory._T);
         double d = _trajectory._jmt_d.get_value(_trajectory._T);
         if (other.overlaps(s, d)) {
@@ -22,13 +23,14 @@ CostFunction::collision_cost() {
 }
 
 double
-CostFunction::buffer_cost() {
-    double closest = std::numeric_limit<double>max();
-    for (Predictions::iterator it = _predictions.begin(); it != _predictions.end(); _it) {
-        Car other = it->at(_trajectory._T);
+CostFunction::buffer_cost() const {
+    double closest = std::numeric_limits<double>::max();
+    for (Predictions::iterator it = _predictions.begin(); it != _predictions.end(); ++it) {
+        Car& temp = it->second;
+        Car other = temp.at(_trajectory._T);
         double s_diff = _trajectory._jmt_s.get_value(_trajectory._T) - other.get_s();
         double d_diff = _trajectory._jmt_d.get_value(_trajectory._T) - other.get_d();
-        distance = sqrt(s_diff * s_diff + d_diff * d_diff);
+        double distance = sqrt(s_diff * s_diff + d_diff * d_diff);
         if (distance < closest) {
             closest = distance;
         }
@@ -37,8 +39,8 @@ CostFunction::buffer_cost() {
 }
 
 double
-CostFunction::max_accel_cost() {
-    for (double t = 0; t < _T; t += TIME_STEP) {
+CostFunction::max_accel_cost() const {
+    for (double t = 0; t < _T; t += Trajectory::TIME_STEP) {
         if (fabs(_trajectory._jmt_s.get_second_derivative(t)) > MAX_ACCELERATION) {
             return 1;
         }
@@ -47,9 +49,9 @@ CostFunction::max_accel_cost() {
 }
 
 double
-CostFunction::total_accel_cost() {
+CostFunction::total_accel_cost() const {
     double accel = 0;
-    for (double t = 0; t < _T; t += TIME_STEP) {
+    for (double t = 0; t < _T; t += Trajectory::TIME_STEP) {
         accel += fabs(_trajectory._jmt_s.get_second_derivative(t));
     }
     accel /= _T;
@@ -57,8 +59,8 @@ CostFunction::total_accel_cost() {
 }
 
 double
-CostFunction::max_jerk_cost() {
-    for (double t = 0; t < _T; t += TIME_STEP) {
+CostFunction::max_jerk_cost() const {
+    for (double t = 0; t < _T; t += Trajectory::TIME_STEP) {
         if (fabs(_trajectory._jmt_s.get_third_derivative(t)) > MAX_JERK) {
             return 1;
         }
@@ -67,9 +69,9 @@ CostFunction::max_jerk_cost() {
 }
 
 double
-CostFunction::total_jerk_cost() {
+CostFunction::total_jerk_cost() const {
     double jerk = 0;
-    for (double t = 0; t < _T; t += TIME_STEP) {
+    for (double t = 0; t < _T; t += Trajectory::TIME_STEP) {
         jerk += fabs(_trajectory._jmt_s.get_third_derivative(t));
     }
     jerk /= _T;
@@ -77,8 +79,8 @@ CostFunction::total_jerk_cost() {
 }
 
 double
-CostFunction::speed_limit_cost() {
-    for (double t = 0; t < _T; t += TIME_STEP) {
+CostFunction::speed_limit_cost() const {
+    for (double t = 0; t < _T; t += Trajectory::TIME_STEP) {
         if (fabs(_trajectory._jmt_s.get_first_derivative(t)) > MAX_SPEED) {
             return 1;
         }
@@ -87,8 +89,8 @@ CostFunction::speed_limit_cost() {
 }
 
 double
-CostFunction::stay_on_road_cost() {
-    for (double t = 0; t < _T; t += TIME_STEP) {
+CostFunction::stay_on_road_cost() const {
+    for (double t = 0; t < _T; t += Trajectory::TIME_STEP) {
         double d = _trajectory._jmt_d.get_value(t);
         if (d < 0 || d > MAX_d) {
             return 1;
@@ -98,40 +100,40 @@ CostFunction::stay_on_road_cost() {
 }
 
 double
-CostFunction::lane_center_cost() {
+CostFunction::lane_center_cost() const {
     double d = std::fmod(_trajectory._jmt_d.get_value(_T), LANE_WIDTH);
     return logistic(fabs(d-LANE_CENTER)/LANE_CENTER);
 }
 
 double
-CostFunction::time_diff_cost() {
-    return logistic(fabs(_T - trajectory._T)/trajectory.SIGMA_T);
+CostFunction::time_diff_cost() const {
+    return logistic(fabs(_T - _trajectory._T)/_trajectory.SIGMA_T);
 }
 
 double
-CostFunction::s_diff_cost() {
+CostFunction::s_diff_cost() const {
     double cost = 0;
-    vector<double> goal_svec = _goal.get_s_vector();
-    vector<double> traj_svec = trajectory._jmt_s.get_vector();
+    std::vector<double> goal_svec = _goal.get_s_vector();
+    std::vector<double> traj_svec = _trajectory._jmt_s.get_vector(_T);
     for (size_t i = 0; i < goal_svec.size(); i++) {
-        cost += logistic(fabs(goal_svec[i] - traj_svec[i]) / trajectory.SIGMA_S[i]);
+        cost += logistic(fabs(goal_svec[i] - traj_svec[i]) / _trajectory.SIGMA_S[i]);
     }
     return cost;
 }
 
 double
-CostFunction::d_diff_cost() {
+CostFunction::d_diff_cost() const {
     double cost = 0;
-    vector<double> goal_dvec = _goal.get_d_vector();
-    vector<double> traj_dvec = trajectory._jmt_d.get_vector();
-    for (size_t i = 0; i < goal_svec.size(); i++) {
-        cost += logistic(fabs(goal_dvec[i] - traj_dvec[i]) / trajectory.SIGMA_D[i]);
+    std::vector<double> goal_dvec = _goal.get_d_vector();
+    std::vector<double> traj_dvec = _trajectory._jmt_d.get_vector(_T);
+    for (size_t i = 0; i < goal_dvec.size(); i++) {
+        cost += logistic(fabs(goal_dvec[i] - traj_dvec[i]) / _trajectory.SIGMA_D[i]);
     }
     return cost;
 }
 
 double
-CostFunction::operator()() {
+CostFunction::operator()() const {
 	return  (COST_WT_COLLISION * collision_cost() +
 			 COST_WT_MAX_ACCELERATION * max_accel_cost() +
 			 COST_WT_MAX_JERK * max_jerk_cost() +

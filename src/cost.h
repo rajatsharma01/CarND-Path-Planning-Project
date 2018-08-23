@@ -3,7 +3,7 @@
 
 #include "trajectory.h"
 
-class CostFuncion {
+class CostFunction {
 private: // Weights for different cost functions
 
     // Feasibility
@@ -37,7 +37,7 @@ private: // Data members
     Predictions& _predictions;  // other cars prediction to help determine cost
 
 public: // C-tor
-    Cost(Car& goal, double T, Trajectory& trajectory, Predictions& predictions)
+    CostFunction(Car& goal, double T, Trajectory& trajectory, Predictions& predictions)
         : _goal(goal), _T(T), _trajectory(trajectory), _predictions(predictions)
     { }
 

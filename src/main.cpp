@@ -167,7 +167,7 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 }
 
 // Return velocity along s and d in frenet coordinates
-vector<double> getFrenetVelocity(double x, double y,
+vector<double> getFrenetVelocity(double x, double y, double vx, double vy,
                                  const vector<double> &maps_x, const vector<double> &maps_y,
                                  const vector<double> &maps_dx, const vector<double> &maps_dy)
 {
@@ -218,7 +218,7 @@ int main() {
 
   Planner planner(max_s, 1.0);  // Path planner for 1s time horizon
 
-  h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy,&planner](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -271,15 +271,15 @@ int main() {
                 double s = sensor_fusion[i][5];
                 double d = sensor_fusion[i][6];
 
-                vector<double> VsVd = getFrenetVelocity(x, y, map_waypoints_x, map_waypoints_y,
+                vector<double> VsVd = getFrenetVelocity(x, y, vx, vy,
+                                                        map_waypoints_x, map_waypoints_y,
                                                         map_waypoints_dx, map_waypoints_dy);
-                predictions[id] = Car(s, d, VsVd[0], VsVd[1]);
+                predictions.insert(std::make_pair(id, Car(s, d, VsVd[0], VsVd[1])));
             }
 
-            vector<double> VsVd = getFrenetVelocity(car_x, car_y, map_waypoints_x, map_waypoints_y,
-                                                    map_waypoints_dx, map_waypoints_dy);
-            Car ego = Car(car_s, VsVd[0], car_d, VsVd[1]);
-            vector<FrenetPt> fpts = planner.plan(ego, predictions);
+            // we are ignoring horizontal velocity for ego car
+            Car ego = Car(car_s, car_speed, car_d, 0);
+            vector<FrenetPt> fpts = planner.plan(&ego, &predictions);
 
             for (size_t i = 0; i < fpts.size(); i++) {
                 vector<double> xy = getXY(fpts[i].s, fpts[i].d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
