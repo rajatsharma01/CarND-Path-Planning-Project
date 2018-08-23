@@ -3,19 +3,13 @@
 
 #include <vector>
 #include <map>
+#include "constants.h"
 
 // Car class can represent a logical position of a car on same side of the road
 // as ego car. This class can either tell facts about current state as pulled
 // from sensor fusion data or can be used as a point on trajectory predicted
 // for this car.
 struct Car {
-private: // Constants
-    static const double MAX_SPEED = 22.35; // maximum allowed speed in m/s (= 50 MPH)
-    static const double MAX_ACCELERATION = 10; // maximum acceleration of this car in m/s^2
-    static const double MAX_JERK = 10; // maximum jerk in m/s^3
-    static const double PREFERRED_GAP = 15; // preffered gap in m to maintain from front car 
-    static const double OVERLAP_DISTANCE = 15; // two cars below overlap distance can collide
-
 private: // Data members
     double _s;          // car's s position in frenet coordinates
     double _s_dot;      // first order derivative os s w.r.t. time (longitudanal acceleration)
@@ -45,9 +39,13 @@ public: // methods
                    _d_dot_dot);
     }
 
+    bool overlaps(double s, double d) const {
+        return (fabs(s - _s) < S_OVERLAP) && (fabs(d - _d) < D_OVERLAP);
+    }
+
     // Return true if this car's s distance overlaps with other_car
     bool overlaps(Car& other_car) const {
-        return fabs(this->s - other_car) < OVERLAP_DISTANCE;
+        overlaps(other_car._s, other_car._d);
     }
 
     // Accessors

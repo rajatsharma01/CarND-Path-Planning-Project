@@ -2,7 +2,6 @@
 #include "jmt.h"
 
 JMT::JMT(std::vector<double> start, std::vector<double> end, double T) : _coeffs(6) {
-
     double T_2 = T * T;
     double T_3 = T_2 * T;
     double T_4 = T_3 * T;
@@ -24,20 +23,20 @@ JMT::JMT(std::vector<double> start, std::vector<double> end, double T) : _coeffs
 }
 
 double
-JMT::get_value(double t) const {
+JMT::get_value(double t) {
     double t2 = t*t;
     double t3 = t2*t;
     double t4 = t3*t;
     double t5 = t4*t;
 
     VectorXd tv(6);
-    tv << 1.0, t, t2, t3, t4, t5;
+    tv << 1, t, t2, t3, t4, t5;
 
     return tv.dot(_coeffs);
 }
 
 double
-JMT::get_first_derivative(double t) const {
+JMT::get_first_derivative(double t) {
     double t2 = t*t;
     double t3 = t2*t;
     double t4 = t3*t;
@@ -49,7 +48,7 @@ JMT::get_first_derivative(double t) const {
 }
 
 double
-JMT::get_second_derivative(double t) const {
+JMT::get_second_derivative(double t) {
     double t2 = t*t;
     double t3 = t2*t;
 
@@ -57,4 +56,22 @@ JMT::get_second_derivative(double t) const {
     tv << 2, 6 * t, 12 * t2, 20 * t3;
 
     return tv.dot(_coeffs.tail(4));
+}
+
+double
+JMT::get_third_derivative(double t) {
+    double t2 = t*t;
+
+    VectorXd tv(3);
+    tv << 6, 24 * t, 60 * t2;
+
+    return tv.dot(_coeffs.tail(3);
+}
+
+vector<double>
+JMT::get_vector(double t) {
+    return { get_value(t),
+             get_first_derivative(t),
+             get_second_derivative(t),
+             get_third_derivative(t) };
 }

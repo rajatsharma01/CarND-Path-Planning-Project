@@ -30,13 +30,15 @@ public: // C-tor
     Trajectory(Car car_start, Car car_end, double T);
 
 public: // Methods
-
     // Return vector of trajectories including this original trajectory, with goals
     // perturbed in time, s and d
     vector<Trajectory> get_perturb_trajectories() const;
 
     // Return a vector of frenet points for each TIME_STEP < _T
     vector<FrenetPt> get_frenet_points() const;
+
+private: // Friends
+    friend class CostFunction;
 };
 
 #endif  // _TRAJECTORY_H

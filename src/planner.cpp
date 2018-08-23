@@ -1,4 +1,5 @@
 #include <cassert>
+#include "constants.h"
 #include "planner.h"
 
 vector<State>
@@ -178,7 +179,7 @@ Planner::generate_trajectory(State next_state, NextMove& out_move) {
     vector<Trajectory> trajectories =
         Trajectory(_car_start, goal, _T).get_perturb_trajectories();
     for (vector<Trajectory>::iterator it = trajectories; it != trajectories.end(); ++it) {
-        double cost = CostFunction(*it, _predictions)();
+        double cost = CostFunction(goal, _T, *it, _predictions)();
         if (cost < min_cost) {
             min_cost = cost;
             out_move.trajectory = *it;

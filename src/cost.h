@@ -12,11 +12,10 @@ private: // Weights for different cost functions
     static const int COST_WT_MAX_JERK               = 100;
 
     // Safety
-    static const int COST_WT_BUFFER                 = 50;
-    static const int COST_WT_MATCH_TRAFFIC_SPEED    = 50;
-    static const int COST_WT_TIME_DIFF              = 30;
-    static const int COST_WT_S_DIFF                 = 30;
-    static const int COST_WT_D_DIFF                 = 30;
+    static const int COST_WT_BUFFER                 = 40;
+    static const int COST_WT_TIME_DIFF              = 40;
+    static const int COST_WT_S_DIFF                 = 40;
+    static const int COST_WT_D_DIFF                 = 40;
 
     // Legality
     static const int COST_WT_SPEED_LIMIT            = 10;
@@ -32,12 +31,14 @@ private: // Weights for different cost functions
     static const int COST_WT_TARGET_LANE            = 1;
 
 private: // Data members
+    Car& _goal;                 // Target goal state for the trajectory
+    double _T;                  // Expected time to reach goal state
     Trajectory& _trajectory;    // Trajectory whose cost needs to be determined
     Predictions& _predictions;  // other cars prediction to help determine cost
 
 public: // C-tor
-    Cost(Trajectory& trajectory, Predictions& predictions)
-        : _trajectory(trajectory), _predictions(predictions)
+    Cost(Car& goal, double T, Trajectory& trajectory, Predictions& predictions)
+        : _goal(goal), _T(T), _trajectory(trajectory), _predictions(predictions)
     { }
 
 private: // helper functions
@@ -58,9 +59,6 @@ private: // Various cost functions
     // Penalizes getting close to other vehicles.
     double buffer_cost() const;
 
-    // Penalizes speeds not matching traffic speed of target lane
-    double match_traffic_speed_cost() const;
- 
     // Penalizes trajectories that span a duration which is longer or shorter
     // than the duration requested.
     double time_diff_cost() const;

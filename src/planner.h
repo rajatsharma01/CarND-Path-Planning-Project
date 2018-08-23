@@ -30,7 +30,6 @@ private: // types
     }
 
 private: // Constants
-    static const double LANE_WIDTH = 4.0;
     static const vector<string> StateName = { "KL", "PLCL", "PLCR", "LCL", "LCR" };
 
 private: // Data

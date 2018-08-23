@@ -35,6 +35,14 @@ public: // methods
     //  s''(t) = 2 * a2 + 6 * a3 * t + 12 * a4 * t^2 + 20 * a5 * t^3
     double get_second_derivative(double t) const;
 
+    // Return third order derivative at t
+    //  s'''(t) = 6 * a3 + 24 * a4 * t + 60 * a5 * t^2
+    double get_third_derivative(double t) const;
+
+    // Returns vector containing above 4 values at t
+    // { s(t), s'(t), s''(t), s'''(t) }
+    vector<double> get_vector(double t) const;
+
 private: // Data members
     VectorXd _coeffs;
 };
