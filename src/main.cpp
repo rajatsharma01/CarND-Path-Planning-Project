@@ -260,8 +260,13 @@ int main() {
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
 
+            // Initialize Ego car, we are ignoring horizontal velocity for ego car
+            Car ego = Car(car_s, car_d, car_speed, 0);
+            std::cout << "Printing Ego car" << std::endl;
+            ego.print();
+
             // Predict state of other cars received in sensor_fusion data
-            map<int, Car> predictions;
+            Predictions predictions;
             for (size_t i = 0; i < sensor_fusion.size(); i++) {
                 int id = sensor_fusion[i][0];
                 double x = sensor_fusion[i][1];
@@ -271,14 +276,23 @@ int main() {
                 double s = sensor_fusion[i][5];
                 double d = sensor_fusion[i][6];
 
-                vector<double> VsVd = getFrenetVelocity(x, y, vx, vy,
-                                                        map_waypoints_x, map_waypoints_y,
-                                                        map_waypoints_dx, map_waypoints_dy);
-                predictions.insert(std::make_pair(id, Car(s, d, VsVd[0], VsVd[1])));
+                // Only add nearby cars to prediction list
+                if (s >= std::max(ego.get_s() - S_HORIZON, 0.0) && s <= (ego.get_s() + S_HORIZON) &&
+                    d >= 0.0 && d <= MAX_d) {
+                    vector<double> VsVd = getFrenetVelocity(x, y, vx, vy,
+                                                            map_waypoints_x, map_waypoints_y,
+                                                            map_waypoints_dx, map_waypoints_dy);
+                    predictions.insert(std::make_pair(id, Car(s, d, VsVd[0], VsVd[1])));
+                }
             }
 
-            // we are ignoring horizontal velocity for ego car
-            Car ego = Car(car_s, car_speed, car_d, 0);
+            std::cout << "Printing Predictions" << std::endl;
+            for (Predictions::iterator it = predictions.begin(); it != predictions.end(); it++) {
+                std::cout << "ID: " << it->first << std::endl;
+                const Car& car = it->second;
+                car.print();
+            }
+
             vector<FrenetPt> fpts = planner.plan(&ego, &predictions);
 
             for (size_t i = 0; i < fpts.size(); i++) {

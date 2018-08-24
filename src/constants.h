@@ -5,6 +5,7 @@ static const double LANE_WIDTH = 4.0;       // width of the lane
 static const double LANE_CENTER = LANE_WIDTH/2; // center of lane from from lane boundary
 static const int TOTAL_LANES = 3;           // number of lanes on highway
 static const double MAX_d = LANE_WIDTH * TOTAL_LANES; // Max value for d
+static const double S_HORIZON = 100.0;      // how far/behind we look for other vehicles from ego car
 
 static const double MAX_SPEED = 22.35;      // maximum allowed speed in m/s (= 50 MPH)
 static const double MAX_ACCELERATION = 10;  // maximum acceleration of this car in m/s^2

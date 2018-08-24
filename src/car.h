@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <iostream>
 #include "constants.h"
 
 // Car class can represent a logical position of a car on same side of the road
@@ -67,6 +68,21 @@ public: // methods
     std::vector<double> get_d_vector() const {
         std::vector<double> dvec = {_d, _d_dot, _d_dot_dot};
         return dvec;
+    }
+
+    void print() const {
+        std::vector<std::vector<double>> sd_vec = { get_s_vector(), get_d_vector() };
+        std::cout << "Car: " << std::endl;
+        for (size_t i = 0; i < sd_vec.size(); i++) {
+            std::cout << ((i == 0) ? "s" : "d") << " vector: [ ";
+            for (size_t ii = 0; ii < sd_vec[i].size(); ii++) {
+                if (ii > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << sd_vec[i][ii];
+            }
+            std::cout << " ]" << std::endl;
+        }
     }
 };
 

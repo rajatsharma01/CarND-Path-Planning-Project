@@ -70,6 +70,7 @@ Planner::get_car_ahead(Lane lane, Car& out_car) const {
     bool found = false;
     for (Predictions::const_iterator it = _predictions->begin(); it != _predictions->end(); ++it) {
         const Car& car_ahead = it->second;
+        car_ahead.print();
         if (d_to_lane(car_ahead.get_d()) == lane &&
             car_ahead.get_s() > _car_start->get_s() &&
             car_ahead.get_s() < min_s) {
@@ -208,6 +209,7 @@ Planner::print_trajectory(const NextMove& move, const std::vector<FrenetPt>& fpt
 std::vector<FrenetPt>
 Planner::plan(const Car* car_start, const Predictions* predictions) {
     _car_start = car_start;
+    _car_start->print();
     _predictions = predictions;
     _lane = d_to_lane(_car_start->get_d());
 
