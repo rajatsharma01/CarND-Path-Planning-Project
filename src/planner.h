@@ -27,10 +27,12 @@ private: // types
         Trajectory trajectory;  // Trajectory associated with this move
         double cost;            // Cost of the trajectory
         State state;            // State transition of the move
+
+        NextMove() { }
     };
 
 private: // Constants
-    static constexpr const char * StateName[] = { "KL", "PLCL", "PLCR", "LCL", "LCR" };
+    static const std::vector<std::string> StateName;
 
 private: // Data
     State _state; // current state
@@ -71,15 +73,15 @@ private: // helpers
 
     // Below functions return a goal configuration for ego car in desired lane
     // with state transition to next_state. Returns true if a goal state is found
-    bool keep_lane_goal(State next_state, Car& goal) const;
-    bool prepare_lane_change_goal(State next_state, Car& goal) const;
-    bool lane_change_goal(State next_state, Car& goal) const;
+    bool keep_lane_goal(const State next_state, Car& goal) const;
+    bool prepare_lane_change_goal(const State next_state, Car& goal) const;
+    bool lane_change_goal(const State next_state, Car& goal) const;
 
     // Generate a low cost jerk minimizing trajectory for next_state
-    NextMove generate_trajectory(State next_state) const;
+    bool generate_trajectory(const State next_state, NextMove& out_move) const;
 
     // Print debug info about trajectory selected by planner
-    void print_trajectory(NextMove& move, std::vector<FrenetPt>& fpts) const;
+    void print_trajectory(const NextMove& move, const std::vector<FrenetPt>& fpts) const;
 
 public: // API
 
@@ -90,7 +92,7 @@ public: // API
     //  predictions - state predictions for other cars on the road
     //
     // returns path vector in frenet coordinates
-    std::vector<FrenetPt> plan(Car* car_start, Predictions* predictions);
+    std::vector<FrenetPt> plan(const Car* car_start, const Predictions* predictions);
 };
 
 #endif  // _PLANNER_H

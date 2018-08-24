@@ -19,7 +19,9 @@ private: // Data members
     double _d_dot;      // first order derivative of d w.r.t. time (horizontal acceleration)
     double _d_dot_dot;  // second order derivative of d w.r.t. time (horizontal jerk)
 
-public: // C-tor/D-tor
+public: // C-tor
+    Car() { }
+
     // Derived state values
     Car(double s, double d, double s_dot, double d_dot,
         double s_dot_dot = 0.0, double d_dot_dot = 0.0)
@@ -45,7 +47,7 @@ public: // methods
     }
 
     // Return true if this car's s distance overlaps with other_car
-    bool overlaps(Car& other_car) const {
+    bool overlaps(const Car& other_car) const {
         overlaps(other_car._s, other_car._d);
     }
 

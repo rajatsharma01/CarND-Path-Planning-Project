@@ -9,12 +9,15 @@
 struct FrenetPt {
     double s;   // s distance
     double d;   // d distance
+
+    FrenetPt(double s_in, double d_in) : s(s_in), d(d_in)
+    { }
 };
 
 class Trajectory {
 private: // Constants
-    static constexpr double SIGMA_S[] = {10.0, 4.0, 2.0};
-    static constexpr double SIGMA_D[] = {1.0, 1.0, 1.0};
+    static const std::vector<double> SIGMA_S;
+    static const std::vector<double> SIGMA_D;
     static constexpr double SIGMA_T = 2.0;
     static const int N_SAMPLES = 10;
     static constexpr double TIME_STEP = 0.02;
@@ -27,7 +30,8 @@ private: // Data members
     JMT _jmt_d; // JMT for d
 
 public: // C-tor
-    Trajectory(Car car_start, Car car_end, double T);
+    Trajectory() { }
+    Trajectory(const Car& car_start, const Car& car_end, double T);
 
 public: // Methods
     // Return vector of trajectories including this original trajectory, with goals

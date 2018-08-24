@@ -1,18 +1,21 @@
 #include "trajectory.h"
 
-Trajectory::Trajectory(Car car_start, Car car_end, double T)
+const std::vector<double> Trajectory::SIGMA_S = {10.0, 4.0, 2.0};
+const std::vector<double> Trajectory::SIGMA_D = {1.0, 1.0, 1.0};
+
+Trajectory::Trajectory(const Car& car_start, const Car& car_end, double T)
     : _car_start(car_start), _car_end(car_end), _T(T),
     _jmt_s(car_start.get_s_vector(), car_end.get_s_vector(), T),
     _jmt_d(car_start.get_d_vector(), car_end.get_d_vector(), T)
 { }
 
 std::vector<Trajectory>
-Trajectory::get_perturb_trajectories() {
+Trajectory::get_perturb_trajectories() const {
     std::vector<Trajectory> perturb_trajs;
     perturb_trajs.push_back(*this);
 
-    std::vector<double> svec = car_end.get_s_vector();
-    std::vector<double> dvec = car_end.get_d_vector();
+    std::vector<double> svec = _car_end.get_s_vector();
+    std::vector<double> dvec = _car_end.get_d_vector();
 
     std::default_random_engine generator;
     std::normal_distribution<double> T_distrib(_T, SIGMA_T);
@@ -39,7 +42,7 @@ Trajectory::get_perturb_trajectories() {
 }
 
 std::vector<FrenetPt>
-Trajectory::get_frenet_points() {
+Trajectory::get_frenet_points() const {
     std::vector<FrenetPt> fpts;
     for (double t = 0; t < _T; t += TIME_STEP) {
         fpts.push_back(FrenetPt(_jmt_s.get_value(t), _jmt_d.get_value(t)));

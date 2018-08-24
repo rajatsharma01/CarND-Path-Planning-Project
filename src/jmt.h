@@ -13,7 +13,9 @@ using Eigen::VectorXd;
    initial state to the final state in time T.
  */
 class JMT {
-public: // Ctor
+public: // C-tor
+    JMT() { }
+
     // start - initial state vector containing
     //         <value, first order derivative, second order derivative>
     // w.r.t. dimension of T e.g. <distance, velocity, acceleration>

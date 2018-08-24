@@ -31,13 +31,13 @@ private: // Weights for different cost functions
     static const int COST_WT_TARGET_LANE            = 1;
 
 private: // Data members
-    Car& _goal;                 // Target goal state for the trajectory
+    const Car& _goal;                 // Target goal state for the trajectory
     double _T;                  // Expected time to reach goal state
-    Trajectory& _trajectory;    // Trajectory whose cost needs to be determined
-    Predictions& _predictions;  // other cars prediction to help determine cost
+    const Trajectory* _trajectory;    // Trajectory whose cost needs to be determined
+    const Predictions* _predictions;  // other cars prediction to help determine cost
 
 public: // C-tor
-    CostFunction(Car& goal, double T, Trajectory& trajectory, Predictions& predictions)
+    CostFunction(const Car& goal, double T, const Trajectory* trajectory, const Predictions* predictions)
         : _goal(goal), _T(T), _trajectory(trajectory), _predictions(predictions)
     { }
 
@@ -86,7 +86,7 @@ private: // Various cost functions
     // Penalizes average acceleration per second is higher than expected
     double total_accel_cost() const;
 
-    // Rewards high average speeds.
+    // Penalize trajectories with lower speed than requested
     double efficiency_cost() const;
 
     // Rewards trajectory ending in target lane
