@@ -161,8 +161,8 @@ CostFunction::operator()() const {
 			 COST_WT_SPEED_LIMIT * speed_limit_cost() +
 			 COST_WT_STAY_ON_ROAD * stay_on_road_cost() +
 			 COST_WT_LANE_CENTER * lane_center_cost() +
-			 COST_WT_AVG_JERK * total_jerk_cost() +
-			 COST_WT_AVG_ACCELERATION * total_accel_cost() +
+			 COST_WT_TOTAL_JERK * total_jerk_cost() +
+			 COST_WT_TOTAL_ACCELERATION * total_accel_cost() +
 			 COST_WT_EFFICIENCY * efficiency_cost() +
              COST_WT_TARGET_LANE * target_lane_cost()) /
 			(COST_WT_COLLISION +
@@ -175,8 +175,8 @@ CostFunction::operator()() const {
 			 COST_WT_SPEED_LIMIT +
 			 COST_WT_STAY_ON_ROAD +
 			 COST_WT_LANE_CENTER +
-			 COST_WT_AVG_JERK +
-			 COST_WT_AVG_ACCELERATION +
+			 COST_WT_TOTAL_JERK +
+			 COST_WT_TOTAL_ACCELERATION +
 			 COST_WT_EFFICIENCY +
              COST_WT_TARGET_LANE);
 }

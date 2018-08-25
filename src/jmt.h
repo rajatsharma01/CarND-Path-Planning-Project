@@ -47,6 +47,9 @@ public: // methods
 
 private: // Data members
     VectorXd _coeffs;
+
+private: // friends;
+    friend std::ostream& operator<<(std::ostream& os, const JMT& jmt);
 };
 
 #endif  // _JMT_H

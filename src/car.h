@@ -24,10 +24,10 @@ public: // C-tor
     Car() { }
 
     // Derived state values
-    Car(double s, double d, double s_dot, double d_dot,
-        double s_dot_dot = 0.0, double d_dot_dot = 0.0)
-        : _s(s), _d(d), _s_dot(s_dot), _d_dot(d_dot),
-          _s_dot_dot(s_dot_dot), _d_dot_dot(d_dot_dot)
+    Car(double s, double s_dot, double s_dot_dot,
+        double d, double d_dot, double d_dot_dot)
+        : _s(s), _s_dot(s_dot), _s_dot_dot(s_dot_dot),
+          _d(d), _d_dot(d_dot), _d_dot_dot(d_dot_dot)
     { }
 
 public: // methods
@@ -70,19 +70,30 @@ public: // methods
         return dvec;
     }
 
-    void print() const {
-        std::vector<std::vector<double>> sd_vec = { get_s_vector(), get_d_vector() };
-        std::cout << "Car: " << std::endl;
+    bool operator==(const Car& other) const {
+        return (_s == other._s && _s_dot == other._s_dot && _s_dot_dot == other._s_dot_dot &&
+                _d == other._d && _d_dot == other._d_dot && _d_dot_dot == other._d_dot_dot);
+    }
+
+    bool operator!=(const Car& other) const {
+        return !operator==(other);
+    }
+
+private: // friends
+    friend std::ostream& operator<<(std::ostream& os, const Car& car) {
+        std::vector<std::vector<double>> sd_vec = { car.get_s_vector(), car.get_d_vector() };
+        os <<"Car: ";
         for (size_t i = 0; i < sd_vec.size(); i++) {
-            std::cout << ((i == 0) ? "s" : "d") << " vector: [ ";
+            os << ((i == 0) ? "s" : ", d") << " vector: [ ";
             for (size_t ii = 0; ii < sd_vec[i].size(); ii++) {
                 if (ii > 0) {
-                    std::cout << ", ";
+                    os << ", ";
                 }
-                std::cout << sd_vec[i][ii];
+                os << sd_vec[i][ii];
             }
-            std::cout << " ]" << std::endl;
+            os << " ]";
         }
+        return os;
     }
 };
 

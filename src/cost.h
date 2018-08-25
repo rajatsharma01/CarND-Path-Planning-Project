@@ -7,9 +7,9 @@ class CostFunction {
 private: // Weights for different cost functions
 
     // Feasibility
-    static const int COST_WT_COLLISION              = 100;
-    static const int COST_WT_MAX_ACCELERATION       = 100;
-    static const int COST_WT_MAX_JERK               = 100;
+    static const int COST_WT_COLLISION              = 500;
+    static const int COST_WT_MAX_ACCELERATION       = 500;
+    static const int COST_WT_MAX_JERK               = 500;
 
     // Safety
     static const int COST_WT_BUFFER                 = 40;
@@ -23,8 +23,8 @@ private: // Weights for different cost functions
 
     // Comfort
     static const int COST_WT_LANE_CENTER            = 5;
-    static const int COST_WT_AVG_JERK               = 5;
-    static const int COST_WT_AVG_ACCELERATION       = 5;
+    static const int COST_WT_TOTAL_JERK             = 5;
+    static const int COST_WT_TOTAL_ACCELERATION     = 5;
 
     // Efficiency
     static const int COST_WT_EFFICIENCY             = 1;

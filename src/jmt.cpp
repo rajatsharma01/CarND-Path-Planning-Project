@@ -75,3 +75,8 @@ JMT::get_vector(double t) const {
              get_second_derivative(t),
              get_third_derivative(t) };
 }
+
+std::ostream& operator<<(std::ostream& os, const JMT& jmt) {
+    os << "JMT: [ " << jmt._coeffs.transpose() << " ]";
+    return os;
+}

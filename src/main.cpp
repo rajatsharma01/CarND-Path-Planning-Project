@@ -22,6 +22,9 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
+// convert speed from miles per hour to meter per second
+double mph2mps(double v) {return v * 0.47704; }
+
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -244,6 +247,7 @@ int main() {
           	double car_d = j[1]["d"];
           	double car_yaw = j[1]["yaw"];
           	double car_speed = j[1]["speed"];
+            car_speed = mph2mps(car_speed);
 
           	// Previous path data given to the Planner
           	auto previous_path_x = j[1]["previous_path_x"];
@@ -261,9 +265,8 @@ int main() {
           	vector<double> next_y_vals;
 
             // Initialize Ego car, we are ignoring horizontal velocity for ego car
-            Car ego = Car(car_s, car_d, car_speed, 0);
-            std::cout << "Printing Ego car" << std::endl;
-            ego.print();
+            Car ego = Car(car_s, car_speed, 0, car_d, 0, 0);
+            std::cout << std::endl << "Ego " << ego << std::endl;
 
             // Predict state of other cars received in sensor_fusion data
             Predictions predictions;
@@ -282,16 +285,18 @@ int main() {
                     vector<double> VsVd = getFrenetVelocity(x, y, vx, vy,
                                                             map_waypoints_x, map_waypoints_y,
                                                             map_waypoints_dx, map_waypoints_dy);
-                    predictions.insert(std::make_pair(id, Car(s, d, VsVd[0], VsVd[1])));
+                    predictions.insert(std::make_pair(id, Car(s, VsVd[0], 0, d, VsVd[1], 0)));
                 }
             }
 
             std::cout << "Printing Predictions" << std::endl;
+            std::cout << "------------------------------" << std::endl;
             for (Predictions::iterator it = predictions.begin(); it != predictions.end(); it++) {
                 std::cout << "ID: " << it->first << std::endl;
                 const Car& car = it->second;
-                car.print();
+                std::cout << car << std::endl;
             }
+            std::cout << "--" << std::endl;
 
             vector<FrenetPt> fpts = planner.plan(&ego, &predictions);
 
@@ -301,12 +306,14 @@ int main() {
                 next_y_vals.push_back(xy[1]);
             }
 
+#if 0
             // Smoothen out pth with spline
             tk::spline smooth;
             smooth.set_points(next_x_vals, next_y_vals);
             for (size_t i = 0; i < next_x_vals.size(); i++) {
                 next_y_vals[i] = smooth(next_x_vals[i]);
             }
+#endif
 
           	msgJson["next_x"] = next_x_vals;
           	msgJson["next_y"] = next_y_vals;

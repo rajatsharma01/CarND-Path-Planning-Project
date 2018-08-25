@@ -43,6 +43,8 @@ public: // Methods
 
 private: // Friends
     friend class CostFunction;
+
+    friend std::ostream& operator<<(std::ostream& os, const Trajectory& trajectory);
 };
 
 #endif  // _TRAJECTORY_H

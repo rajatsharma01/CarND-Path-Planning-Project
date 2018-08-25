@@ -19,10 +19,10 @@ Trajectory::get_perturb_trajectories() const {
 
     std::default_random_engine generator;
     std::normal_distribution<double> T_distrib(_T, SIGMA_T);
-    std::vector<std::normal_distribution<double>> S_distrib(SIGMA_S.size());
-    std::vector<std::normal_distribution<double>> D_distrib(SIGMA_D.size());
+    std::vector<std::function<double(std::default_random_engine&)>> S_distrib;
+    std::vector<std::function<double(std::default_random_engine&)>> D_distrib;
 
-    for (size_t i = 0; i < S_distrib.size(); i++) {
+    for (size_t i = 0; i < SIGMA_S.size(); i++) {
         S_distrib.push_back(std::normal_distribution<double>(svec[i], SIGMA_S[i]));
         D_distrib.push_back(std::normal_distribution<double>(dvec[i], SIGMA_D[i]));
     }
@@ -30,11 +30,12 @@ Trajectory::get_perturb_trajectories() const {
     for (int s = 0; s < N_SAMPLES; s++) {
         double perturb_T = T_distrib(generator);
         Car perturb_end = Car(S_distrib[0](generator),
-                              D_distrib[0](generator),
                               S_distrib[1](generator),
-                              D_distrib[1](generator),
                               S_distrib[2](generator),
+                              D_distrib[0](generator),
+                              D_distrib[1](generator),
                               D_distrib[2](generator));
+        assert(perturb_end != _car_start);
         perturb_trajs.push_back(Trajectory(_car_start, perturb_end, perturb_T));
     }
 
@@ -45,7 +46,23 @@ std::vector<FrenetPt>
 Trajectory::get_frenet_points() const {
     std::vector<FrenetPt> fpts;
     for (double t = 0; t < _T; t += TIME_STEP) {
-        fpts.push_back(FrenetPt(_jmt_s.get_value(t), _jmt_d.get_value(t)));
+        double s = _jmt_s.get_value(t);
+        double d = _jmt_d.get_value(t);
+        if (s > _car_end.get_s()) {
+            break;
+        }
+        fpts.push_back(FrenetPt(s, d));
     }
     return fpts;
+}
+
+std::ostream&
+operator<<(std::ostream& os, const Trajectory& trajectory) {
+    os << "Trajectory: " << std::endl;
+    os << "Start " << trajectory._car_start << std::endl;
+    os << "End " << trajectory._car_end << std::endl;
+    os << "T: " << trajectory._T << std::endl;
+    os << "s " << trajectory._jmt_s << std::endl;
+    os << "d " << trajectory._jmt_d << std::endl;
+    return os;
 }

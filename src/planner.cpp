@@ -70,7 +70,6 @@ Planner::get_car_ahead(Lane lane, Car& out_car) const {
     bool found = false;
     for (Predictions::const_iterator it = _predictions->begin(); it != _predictions->end(); ++it) {
         const Car& car_ahead = it->second;
-        car_ahead.print();
         if (d_to_lane(car_ahead.get_d()) == lane &&
             car_ahead.get_s() > _car_start->get_s() &&
             car_ahead.get_s() < min_s) {
@@ -102,17 +101,19 @@ Planner::get_car_behind(Lane lane, Car& out_car) const {
 Car
 Planner::get_lane_kinematics(Lane lane) const {
     double s;
-    double v = std::min(MAX_SPEED, _car_start->get_s_dot() + MAX_ACCELERATION * _T);
+    double u = _car_start->get_s_dot();
+    double v = std::min(MAX_SPEED, u + MAX_ACCELERATION * _T);
     double a;
     double T2 = _T*_T;
     Car car_ahead;
 
     // Follow the car ahead
     if (get_car_ahead(lane, car_ahead)) {
+        std::cout << "Ahead " << car_ahead << std::endl;
         v = std::min(car_ahead.get_s_dot(), v);
     }
-    a = (v - _car_start->get_s_dot())/_T;        // a = (v-u)/t
-    s = _car_start->get_s() + v*_T + 0.5*a*T2;   // s = ut + 1/2at^2 
+    a = (v - u)/_T;        // a = (v-u)/t
+    s = _car_start->get_s() + u*_T + 0.5*a*T2;   // s = ut + 1/2at^2 
 
     return Car(s, v, a, lane_to_d(lane), 0, 0);
 }
@@ -175,6 +176,14 @@ Planner::generate_trajectory(const Planner::State next_state, NextMove& out_move
     // If no transition is possible, return error
     if (!status) return status;
 
+    std::cout << "Generating trajectory for state: " << StateName[next_state] << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
+    std::cout << "Start " << *_car_start << std::endl;
+    std::cout << "Goal " << goal << std::endl;
+
+    assert(*_car_start != goal);
+    assert(_car_start->get_s() < goal.get_s());
+
     // Generate a minimum cost jerk minimum trajectory for this possible transition
     double min_cost = std::numeric_limits<double>::max();
     std::vector<Trajectory> trajectories =
@@ -190,13 +199,20 @@ Planner::generate_trajectory(const Planner::State next_state, NextMove& out_move
         }
     }
 
+    std::cout << "Min Cost: " << min_cost << std::endl;
+    std::cout << "--" << std::endl;
+    std::cout << std::endl;
+
     return status;
 }
 
 void
 Planner::print_trajectory(const NextMove& move, const std::vector<FrenetPt>& fpts) const {
+    std::cout << "Minimal Cost Trajectory Info" << std::endl;
+    std::cout << "----------------------------" << std::endl;
     std::cout << "State: " << StateName[move.state] << ", Cost: " << move.cost << std::endl;
-    std::cout << "Trajectory: [ ";
+    std::cout << move.trajectory << std::endl;
+    std::cout << "Frenet Pts: [ ";
     for (int i = 0; i < fpts.size(); i++) {
         if (i > 0) {
             std::cout << ", ";
@@ -209,7 +225,6 @@ Planner::print_trajectory(const NextMove& move, const std::vector<FrenetPt>& fpt
 std::vector<FrenetPt>
 Planner::plan(const Car* car_start, const Predictions* predictions) {
     _car_start = car_start;
-    _car_start->print();
     _predictions = predictions;
     _lane = d_to_lane(_car_start->get_d());
 
